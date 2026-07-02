@@ -10,7 +10,7 @@ function Landing() {
       <div className="landing-content">
         <div className="landing-brand">
           <div className="brand-logo">PM</div>
-          <h1>ProManage</h1>
+          <h1>Project Management</h1>
           <p>The smart way to manage your team and projects</p>
         </div>
         <div className="landing-cards">
