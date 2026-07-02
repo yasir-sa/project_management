@@ -16,7 +16,7 @@ function EmployeeLogin() {
     setLoading(true);
     try {
       const res = await API.post('/api/auth/employee/login', form);
-      login(res.data.user);
+      login(res.data.user, res.data.token);
       toast.success(`Welcome, ${res.data.user.name}!`);
       navigate('/employee/dashboard');
     } catch (err) {

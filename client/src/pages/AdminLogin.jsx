@@ -16,7 +16,7 @@ function AdminLogin() {
     setLoading(true);
     try {
       const res = await API.post('/api/auth/admin/login', form);
-      login(res.data.user);
+      login(res.data.user, res.data.token);
       toast.success(`Welcome back, ${res.data.user.name}!`);
       navigate('/admin/dashboard');
     } catch (err) {
