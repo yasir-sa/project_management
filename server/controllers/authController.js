@@ -43,8 +43,9 @@ const employeeLogin = async (req, res) => {
     const match = await bcrypt.compare(password, employee.password);
     if (!match) return res.status(401).json({ message: 'Invalid password' });
     const token = generateToken();
-    tokens.set(token, { id: employee.id, name: employee.name, email: employee.email, role: 'employee' });
-    res.json({ token, user: { id: employee.id, name: employee.name, email: employee.email, role: 'employee' } });
+    const userData = { id: employee.id, name: employee.name, email: employee.email, role: 'employee', phone: employee.phone, department: employee.department };
+    tokens.set(token, userData);
+    res.json({ token, user: userData });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
