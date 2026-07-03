@@ -11,10 +11,10 @@ const STATUS_CLASS  = { pending: 'badge-yellow', 'in-progress': 'badge-blue', co
 function EmployeeDashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [tab, setTab]           = useState('projects');
-  const [projects, setProjects] = useState([]);
-  const [messages, setMessages] = useState([]);
-  const [msgInput, setMsgInput] = useState('');
+  const [nav, setNav]            = useState('projects');
+  const [projects, setProjects]  = useState([]);
+  const [messages, setMessages]  = useState([]);
+  const [msgInput, setMsgInput]  = useState('');
   const chatEnd = useRef(null);
 
   useEffect(() => { fetchProjects(); fetchMessages(); }, []);
@@ -50,109 +50,185 @@ function EmployeeDashboard() {
   };
 
   const today = new Date().toISOString().split('T')[0];
-  const overdueProjects  = projects.filter(p => p.dueDate < today && p.status !== 'completed');
-  const pendingProjects  = projects.filter(p => p.status === 'pending');
-  const doneProjects     = projects.filter(p => p.status === 'completed');
+  const overdueProjects = projects.filter(p => p.dueDate < today && p.status !== 'completed');
+  const unreadCount     = messages.filter(m => m.senderType === 'admin' && !m.isRead).length;
+
+  const navItems = [
+    { key: 'projects',  label: 'My Projects', icon: '📋' },
+    { key: 'messages',  label: 'Messages',    icon: '💬' },
+    { key: 'profile',   label: 'Profile',     icon: '👤' },
+  ];
 
   return (
-    <div className="emp-layout">
-      {/* Header */}
-      <header className="emp-header">
-        <div className="emp-header-brand">
-          <div className="brand-dot">PM</div>
-          <span>ProManage</span>
+    <div className="employee-layout">
+      {/* Sidebar */}
+      <aside className="sidebar">
+        <div className="sidebar-brand">
+          <span>PM</span>
+          <span className="sidebar-brand-text">ProManage</span>
         </div>
-        <div className="emp-header-right">
-          <div className="emp-info">
-            <div className="hdr-avatar">{user?.name?.[0]?.toUpperCase()}</div>
+        <nav className="sidebar-nav">
+          {navItems.map(item => (
+            <button key={item.key} className={`nav-item ${nav === item.key ? 'active' : ''}`}
+              onClick={() => setNav(item.key)}>
+              <span className="nav-icon">{item.icon}</span> {item.label}
+              {item.key === 'messages' && unreadCount > 0 && (
+                <span className="unread-badge">{unreadCount}</span>
+              )}
+            </button>
+          ))}
+        </nav>
+        <div className="sidebar-footer">
+          <div className="sidebar-user">
+            <div className="user-avatar">{user?.name?.[0]?.toUpperCase()}</div>
             <div>
-              <p className="hdr-name">{user?.name}</p>
-              <p className="hdr-role">Employee</p>
+              <p className="user-name">{user?.name}</p>
+              <p className="user-role">Employee</p>
             </div>
           </div>
-          <button className="emp-logout" onClick={handleLogout}>Logout</button>
+          <button className="logout-btn" onClick={handleLogout}>Logout</button>
         </div>
-      </header>
+      </aside>
 
-      <div className="emp-body">
-        {/* Overdue Alert */}
-        {overdueProjects.length > 0 && (
-          <div className="overdue-alert">
-            ⚠️ You have <strong>{overdueProjects.length}</strong> overdue {overdueProjects.length === 1 ? 'project' : 'projects'}. Please update the status or contact your admin.
-          </div>
-        )}
-
-        {/* Stats */}
-        <div className="emp-stats">
-          <div className="emp-stat"><p className="es-num">{projects.length}</p><p className="es-label">Total Projects</p></div>
-          <div className="emp-stat"><p className="es-num">{pendingProjects.length}</p><p className="es-label">Pending</p></div>
-          <div className="emp-stat"><p className="es-num">{projects.filter(p=>p.status==='in-progress').length}</p><p className="es-label">In Progress</p></div>
-          <div className="emp-stat"><p className="es-num">{doneProjects.length}</p><p className="es-label">Completed</p></div>
-          <div className="emp-stat danger"><p className="es-num">{overdueProjects.length}</p><p className="es-label">Overdue</p></div>
-        </div>
-
-        {/* Tabs */}
-        <div className="emp-tabs">
-          <button className={`emp-tab ${tab === 'projects' ? 'active' : ''}`} onClick={() => setTab('projects')}>📋 My Projects</button>
-          <button className={`emp-tab ${tab === 'messages' ? 'active' : ''}`} onClick={() => setTab('messages')}>💬 Messages</button>
-        </div>
-
-        {/* Projects Tab */}
-        {tab === 'projects' && (
-          <div className="proj-grid">
-            {projects.length === 0 && (
-              <div className="empty-state"><p>🎉</p><h3>No projects assigned yet</h3><p>Your admin will assign projects to you soon.</p></div>
+      {/* Main */}
+      <main className="employee-main">
+        <header className="employee-header">
+          <h1>{navItems.find(n => n.key === nav)?.label}</h1>
+          <div className="header-right">
+            {overdueProjects.length > 0 && (
+              <span className="badge badge-red">⚠ {overdueProjects.length} Overdue</span>
             )}
-            {projects.map(p => {
-              const isOverdue = p.dueDate < today && p.status !== 'completed';
-              return (
-                <div key={p.id} className={`proj-card ${isOverdue ? 'proj-overdue' : ''}`}>
-                  {isOverdue && <div className="overdue-tag">OVERDUE</div>}
-                  <div className="proj-card-header">
-                    <h3>{p.title}</h3>
-                    <span className={`badge ${STATUS_CLASS[p.status]}`}>{STATUS_LABELS[p.status]}</span>
-                  </div>
-                  {p.description && <p className="proj-desc">{p.description}</p>}
-                  <div className="proj-meta">
-                    <span className={isOverdue ? 'due-red' : 'due-normal'}>📅 Due: {p.dueDate}</span>
-                  </div>
-                  <div className="proj-actions">
-                    <label>Update Status:</label>
-                    <select value={p.status} onChange={e => handleStatusUpdate(p.id, e.target.value)}
-                      className={`status-sel ${STATUS_CLASS[p.status]}`}>
-                      <option value="pending">Pending</option>
-                      <option value="in-progress">In Progress</option>
-                      <option value="completed">Completed</option>
-                    </select>
-                  </div>
-                </div>
-              );
-            })}
           </div>
-        )}
+        </header>
 
-        {/* Messages Tab */}
-        {tab === 'messages' && (
-          <div className="emp-chat">
-            <div className="emp-chat-box">
-              {messages.length === 0 && <p className="no-msg">No messages yet. Send a message to your admin!</p>}
-              {messages.map(msg => (
-                <div key={msg.id} className={`msg-bubble ${msg.senderType === 'employee' ? 'msg-right' : 'msg-left'}`}>
-                  <p className="msg-sender">{msg.senderType === 'employee' ? 'You' : 'Admin'}</p>
-                  <p>{msg.content}</p>
-                  <span className="msg-time">{new Date(msg.createdAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</span>
+        <div className="employee-content">
+
+          {/* PROJECTS */}
+          {nav === 'projects' && (
+            <div>
+              <div className="welcome-banner">
+                <div className="welcome-text">
+                  <h2>Welcome back, {user?.name?.split(' ')[0]}!</h2>
+                  <p>Here's your project overview for today.</p>
                 </div>
-              ))}
-              <div ref={chatEnd} />
+                <div className="welcome-stats">
+                  <div className="ws-item">
+                    <p className="ws-num">{projects.length}</p>
+                    <p className="ws-label">Total</p>
+                  </div>
+                  <div className="ws-item">
+                    <p className="ws-num">{projects.filter(p => p.status === 'in-progress').length}</p>
+                    <p className="ws-label">In Progress</p>
+                  </div>
+                  <div className="ws-item">
+                    <p className="ws-num">{projects.filter(p => p.status === 'completed').length}</p>
+                    <p className="ws-label">Done</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="projects-section">
+                <div className="section-header">
+                  <h3>Assigned Projects</h3>
+                  <p>{projects.length} total · {overdueProjects.length} overdue</p>
+                </div>
+                <div className="projects-grid">
+                  {projects.length === 0 && (
+                    <div className="no-projects">
+                      <p>No projects assigned yet. Your admin will assign projects soon.</p>
+                    </div>
+                  )}
+                  {projects.map(p => {
+                    const isOverdue = p.dueDate < today && p.status !== 'completed';
+                    return (
+                      <div key={p.id} className={`project-card ${isOverdue ? 'overdue' : ''}`}>
+                        <div className="pc-top">
+                          <h4 className="pc-title">{p.title}</h4>
+                          <span className={`badge ${STATUS_CLASS[p.status]}`}>{STATUS_LABELS[p.status]}</span>
+                        </div>
+                        {p.description && <p className="pc-desc">{p.description}</p>}
+                        <div className="pc-meta">
+                          <span className={`pc-due ${isOverdue ? 'overdue' : ''}`}>
+                            📅 {isOverdue ? 'Overdue · ' : 'Due · '}{p.dueDate}
+                          </span>
+                          <select
+                            className={`status-select ${STATUS_CLASS[p.status]}`}
+                            value={p.status}
+                            onChange={e => handleStatusUpdate(p.id, e.target.value)}>
+                            <option value="pending">Pending</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="completed">Completed</option>
+                          </select>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
-            <form className="emp-chat-input" onSubmit={handleSendMsg}>
-              <input placeholder="Ask your admin something..." value={msgInput}
-                onChange={e => setMsgInput(e.target.value)} />
-              <button type="submit">Send</button>
-            </form>
-          </div>
-        )}
-      </div>
+          )}
+
+          {/* MESSAGES */}
+          {nav === 'messages' && (
+            <div className="msg-wrapper">
+              <div className="msg-header">
+                <h3>Messages with Admin</h3>
+                <p>Ask questions or share updates about your projects</p>
+              </div>
+              <div className="chat-messages">
+                {messages.length === 0 && (
+                  <p className="no-messages">No messages yet. Send a message to your admin!</p>
+                )}
+                {messages.map(msg => (
+                  <div key={msg.id} className={`msg-bubble ${msg.senderType === 'employee' ? 'msg-right' : 'msg-left'}`}>
+                    <p>{msg.content}</p>
+                    <span className="msg-time">
+                      {msg.senderType === 'admin' ? 'Admin · ' : 'You · '}
+                      {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                ))}
+                <div ref={chatEnd} />
+              </div>
+              <form className="chat-input" onSubmit={handleSendMsg}>
+                <input placeholder="Ask your admin something..." value={msgInput}
+                  onChange={e => setMsgInput(e.target.value)} />
+                <button type="submit">Send</button>
+              </form>
+            </div>
+          )}
+
+          {/* PROFILE */}
+          {nav === 'profile' && (
+            <div className="profile-card">
+              <div className="profile-avatar-lg">{user?.name?.[0]?.toUpperCase()}</div>
+              <div className="profile-info">
+                <h2>{user?.name}</h2>
+                <p>{user?.email}</p>
+              </div>
+              <div className="profile-fields">
+                <div className="pf-item">
+                  <label>Department</label>
+                  <p>{user?.department || '—'}</p>
+                </div>
+                <div className="pf-item">
+                  <label>Phone</label>
+                  <p>{user?.phone || '—'}</p>
+                </div>
+                <div className="pf-item">
+                  <label>Projects</label>
+                  <p>{projects.length}</p>
+                </div>
+                <div className="pf-item">
+                  <label>Completed</label>
+                  <p>{projects.filter(p => p.status === 'completed').length}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+        </div>
+      </main>
     </div>
   );
 }
