@@ -109,7 +109,7 @@ function AdminDashboard() {
     <div className="admin-layout">
       {/* Sidebar */}
       <aside className="sidebar">
-        <div className="sidebar-brand"><span>PM</span><span className="sidebar-brand-text">ProManage</span></div>
+        <div className="sidebar-brand"><span className="logo-box">PM</span><span className="sidebar-brand-text">ProManage</span></div>
         <nav className="sidebar-nav">
           {navItems.map(item => (
             <button key={item.key} className={`nav-item ${nav === item.key ? 'active' : ''}`}

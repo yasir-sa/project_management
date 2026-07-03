@@ -64,7 +64,7 @@ function EmployeeDashboard() {
       {/* Sidebar */}
       <aside className="sidebar">
         <div className="sidebar-brand">
-          <span>PM</span>
+          <span className="logo-box">PM</span>
           <span className="sidebar-brand-text">ProManage</span>
         </div>
         <nav className="sidebar-nav">

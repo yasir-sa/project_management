@@ -25,7 +25,7 @@
   padding: 24px 20px 20px;
   border-bottom: 1px solid rgba(255,255,255,0.06);
 }
-.sidebar-brand span {
+.sidebar-brand .logo-box {
   width: 28px; height: 28px;
   background: #0C7A6F;
   border-radius: 7px;
